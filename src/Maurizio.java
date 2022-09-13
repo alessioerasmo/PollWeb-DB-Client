@@ -40,13 +40,53 @@ public class Maurizio {
 					System.out.println("Benvenuto " + utente.getUsername() + "!");
 			}
 			/*
-			 * Mostra i sodaggi che può compilare
+			 * CICLO WHILE MENU'
 			 */
-			System.out.println();
-			ClientFunction.MostraSondaggiByUser(utente, con);
 
-			
-		con.close();
+			int exit = 0;
+			int risposta = 0;
+			String messaggio;
+			while (exit != 1) {
+				System.out.println();
+				System.out.println("Cosa vuoi fare? (Seleziona il numero corrispondente all'azione desiderata)");
+				System.out.println("1) Visualizza Info su di me");
+				System.out.println("2) Visualizza Sondaggi da compilare");
+				System.out.println("3) Compila un sondaggio");
+				System.out.println("4) Crea un sondaggio");
+				System.out.println("4) Modifica un sondaggio");
+				System.out.println("5) Esci");
+
+				risposta = Integer.parseInt(reader.readLine());
+
+				messaggio = "tornare al menÃ¹";
+				switch (risposta) {
+				case 2:
+					System.out.println();
+					ClientFunction.MostraSondaggiByUser(utente, con);
+					break;
+				case 3:
+					Sondaggio sondaggio = ClientFunction.CompilaSondaggio(utente, con);
+					if (sondaggio != null) {
+						System.out.println();
+						System.out.println("Compilazione sondaggio: " + sondaggio.getTitolo());
+						System.out.println();
+						System.out.println(sondaggio.getApertura());
+					}
+					break;
+				case 5:
+					exit = 1;
+					messaggio = "uscire";
+					break;
+				case 1:
+					ClientFunction.MostraInfoUtente(utente, con);
+					break;
+				}
+				System.out.println();
+				System.out.println("premi Enter per " + messaggio);
+				reader.readLine();
+			}
+
+			con.close();
 
 		} catch (SQLException e) {
 
