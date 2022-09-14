@@ -1,6 +1,9 @@
 import java.io.*;
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import SQLinterface.*;
 import domain.*;
 
@@ -71,6 +74,134 @@ public class Maurizio {
 						System.out.println("Compilazione sondaggio: " + sondaggio.getTitolo());
 						System.out.println();
 						System.out.println(sondaggio.getApertura());
+						System.out.println();
+
+						ArrayList<Domanda> domande = sondaggio.getDomande();
+
+						System.out.println("premi Enter per visualizzare tutte le domande a cui dovrai rispondere");
+						System.out.println();
+						reader.readLine();
+						Iterator<Domanda> itr = domande.iterator();
+						while (itr.hasNext()) {
+							Domanda dom = itr.next();
+							System.out.println();
+							System.out.println(dom.getPosizione() + ") " + dom.getTesto());
+							System.out.println("Note: " + dom.getNote());
+							System.out.println("Tipo Domanda: " + dom.getTipo());
+						}
+
+						System.out.println();
+						System.out.println("premi Enter per iniziare a rispondere");
+						reader.readLine();
+						System.out.println();
+
+						Statement stmt = con.createStatement();
+						itr = domande.iterator();
+						while (itr.hasNext()) {
+							Domanda dom = itr.next();
+							System.out.println();
+							System.out.println(dom.getPosizione() + ") " + dom.getTesto());
+							System.out.println("Note: " + dom.getNote());
+
+							if (dom.getTipo().equals("Numerica")) {
+								System.out.println("NB: inserire un valore intero compreso tra " + dom.getMinimo()
+										+ " e " + dom.getMassimo());
+								String risp = reader.readLine();
+								if ((stmt.executeUpdate("CALL RispostaNumerica(" + utente.getID() + ", " + dom.getID()
+										+ ", " + risp + ")")) != 1)
+									break;
+
+							}
+							if (dom.getTipo().equals("Data")) {
+								System.out.println("NB: inserire un valore compreso tra " + dom.getMinimo() + " e "
+										+ dom.getMassimo() + " nel formato YYYY-MM-DD");
+								String risp = reader.readLine();
+								if ((stmt.executeUpdate("CALL RispostaData(" + utente.getID() + ", " + dom.getID()
+										+ ", '" + risp + "')")) != 1)
+									break;
+
+							}
+							if (dom.getTipo().equals("Multipla")) {
+								System.out.println("NB: selezionare almeno " + dom.getMinimo() + " risposte ma massimo "
+										+ dom.getMassimo() + "Tra le seguenti");
+
+								ResultSet rs = stmt.executeQuery(
+										"SELECT r.ID, r.Testo FROM maurizio.associazione_scelta_multipla as a JOIN rispostaselezionabile as r WHERE (a.ID_Risposta = r.ID AND ID_Domanda = "
+												+ dom.getID() + ");");
+
+								ArrayList<RispostaSelezionabile> risp = new ArrayList<RispostaSelezionabile>();
+								int label = 0;
+								while (rs.next()) {
+									RispostaSelezionabile rispsel = new RispostaSelezionabile();
+									rispsel.setID(rs.getInt("ID"));
+									rispsel.setTesto(rs.getString("Testo"));
+									rispsel.setLabel(++label);
+									System.out.println(label + ") " + rispsel.getTesto());
+									risp.add(rispsel);
+								}
+
+								int rispostedate = 0;
+								String volontà = "si";
+								stmt.executeUpdate("CALL DeselezionaRisposteMultiple(" + utente.getID() + ", "
+										+ dom.getID() + ", 0 )");
+								while ((rispostedate < dom.getMassimo()) && volontà.equals("si")) {
+
+									String num = reader.readLine();
+									int numero = Integer.parseInt(num);
+									if ((numero < 1) || (numero > label)) {
+										System.out.println("inserire un valore valido");
+									} else {
+
+										Iterator<RispostaSelezionabile> it = risp.iterator();
+
+										while (it.hasNext()) {
+											RispostaSelezionabile r = it.next();
+											if (r.getLabel() == numero) {
+
+												if ((stmt.executeUpdate(
+														"CALL SelezionaRispostaMultipla(" + utente.getID() + ", "
+																+ dom.getID() + ", " + r.getID() + ")")) == 0)
+													break;
+
+												rispostedate++;
+
+											}
+										}
+
+									}
+
+									if (rispostedate < dom.getMassimo() && rispostedate >= dom.getMinimo()) {
+										System.out.println();
+										System.out.println(
+												"Hai selezionato un numero sufficiente di risposte, se vuoi selezionarne altre? (scrivi si o no)");
+
+										if (reader.readLine().equalsIgnoreCase("no"))
+											volontà = "no";
+
+									}
+								}
+
+							}
+							if (dom.getTipo().equals("Aperta Breve")) {
+
+								System.out.println("NB: utilizzare poche parole");
+								String risp = reader.readLine();
+								if ((stmt.executeUpdate("CALL RispostaApertaBreve(" + utente.getID() + ", "
+										+ dom.getID() + ", '" + risp + "')")) != 1)
+									break;
+							}
+							if (dom.getTipo().equals("Aperta Lunga")) {
+
+								String risp = reader.readLine();
+								if ((stmt.executeUpdate("CALL RispostaApertaLunga(" + utente.getID() + ", "
+										+ dom.getID() + ", '" + risp + "')")) != 1)
+									break;
+							}
+						}
+
+						System.out.println();
+						System.out.println(sondaggio.getChiusura());
+						System.out.println();
 					}
 					break;
 				case 5:

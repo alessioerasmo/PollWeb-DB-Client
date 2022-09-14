@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import domain.*;
 
@@ -219,41 +221,53 @@ public class ClientFunction {
 
 				while (rs.next()) {
 					String Tipo = rs.getString("Tipo");
-					switch (Tipo) {
-					case "Numerica":
-						DomandaNumerica domandan = new DomandaNumerica();
-						domandan.setID(Integer.parseInt(rs.getString("ID")));
-						domandan.setID_Sondaggio(sondaggio.getID());
-						domandan.setTesto(rs.getString("TestoDomanda"));
-						domandan.setNote(rs.getString("Note"));
-						domandan.setMinimo(Integer.parseInt(rs.getString("Minimo")));
-						domandan.setMassimo(Integer.parseInt(rs.getString("Massimo")));
-						break;
-					case "Data":
-						DomandaData domandad = new DomandaData();
-						domandad.setID(Integer.parseInt(rs.getString("ID")));
-						domandad.setID_Sondaggio(sondaggio.getID());
-						domandad.setTesto(rs.getString("TestoDomanda"));
-						domandad.setNote(rs.getString("Note"));
-						domandad.setMinimo(LocalDate.parse(rs.getString("Minimo")));
-						domandad.setMassimo(LocalDate.parse(rs.getString("Massimo")));
-						break;
-					case "Multipla":
-						DomandaNumerica domandan = new DomandaNumerica();
-						domandan.setID(Integer.parseInt(rs.getString("ID")));
-						domandan.setID_Sondaggio(sondaggio.getID());
-						domandan.setTesto(rs.getString("TestoDomanda"));
-						domandan.setNote(rs.getString("Note"));
-						domandan.setMinimo(Integer.parseInt(rs.getString("Minimo")));
-						domandan.setMassimo(Integer.parseInt(rs.getString("Massimo")));
-						break;
-					case "Aperta Breve":
-						break;
-					case "Aperta Lunga":
-						break;
-					}
 
+					Domanda dom = new Domanda();
+					dom.setID(Integer.parseInt(rs.getString("ID")));
+					dom.setID_Sondaggio(sondaggio.getID());
+					dom.setPosizione(Integer.parseInt(rs.getString("Posizione")));
+					dom.setTesto(rs.getString("TestoDomanda"));
+					dom.setTipo(Tipo);
+					dom.setNote(rs.getString("Note"));
+					if (Tipo.equals("Numerica")) {
+
+						if (rs.getString("Minimo") != null)
+							dom.setMinimo(rs.getInt("Minimo"));
+						else
+							dom.setMinimo(Integer.MIN_VALUE);
+
+						if (rs.getString("Massimo") != null)
+							dom.setMassimo(rs.getInt("Massimo"));
+						else
+							dom.setMassimo(Integer.MAX_VALUE);
+					}
+					if (Tipo.equals("Data")) {
+						if (rs.getString("Minimo") != null)
+							dom.setDataMinima(LocalDate.parse(rs.getString("Minimo")));
+						if (rs.getString("Massimo") != null)
+							dom.setDataMassima(LocalDate.parse(rs.getString("Massimo")));
+					}
+					if (Tipo.equals("Multipla")) {
+
+						if (rs.getString("Minimo") != null)
+							dom.setMinimo(rs.getInt("Minimo"));
+						else
+							dom.setMinimo(Integer.MIN_VALUE);
+
+						if (rs.getString("Massimo") != null)
+							dom.setMassimo(rs.getInt("Massimo"));
+						else
+							dom.setMassimo(Integer.MAX_VALUE);
+					}
+					if (Tipo.equals("Aperta Breve")) {
+						dom.setPattern(rs.getString("Pattern"));
+					}
+					if (Tipo.equals("Aperta Lunga")) {
+						dom.setPattern(rs.getString("Pattern"));
+					}
+					sondaggio.addDomanda(dom);
 				}
+
 			}
 
 			return sondaggio;
