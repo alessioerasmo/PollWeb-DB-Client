@@ -1,5 +1,5 @@
 # PollWeb-DB-Client
-Dump file and a simple client java application. Written for didactic purposees
+Dump file and a simple client java application. Written for didactic purposes
 
 For the correct execution of the client:
 - download the MYSQL "Connector J" and link the JAR file to the progect. 
